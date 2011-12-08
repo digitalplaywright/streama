@@ -22,6 +22,8 @@ module Streama
       index [['object._id', Mongo::ASCENDING], ['object._type', Mongo::ASCENDING]]
       index [['target._id', Mongo::ASCENDING], ['target._type', Mongo::ASCENDING]]
       index [['object_group.id', Mongo::ASCENDING], ['object_group.type', Mongo::ASCENDING]]
+      index [['target_group.id', Mongo::ASCENDING], ['target_group.type', Mongo::ASCENDING]]
+
 
       index [['receivers.id', Mongo::ASCENDING], ['receivers.type', Mongo::ASCENDING]]
           
