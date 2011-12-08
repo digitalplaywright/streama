@@ -10,6 +10,10 @@ module Streama
       field :verb,        :type => Symbol
       field :actor,       :type => Hash
       field :object,      :type => Hash
+      field :object_group,  :type => Array
+      field :target_group,  :type => Array
+
+
       field :target,      :type => Hash
       field :receivers,   :type => Array
           
@@ -17,6 +21,8 @@ module Streama
       index [['actor._id', Mongo::ASCENDING], ['actor._type', Mongo::ASCENDING]]
       index [['object._id', Mongo::ASCENDING], ['object._type', Mongo::ASCENDING]]
       index [['target._id', Mongo::ASCENDING], ['target._type', Mongo::ASCENDING]]
+      index [['object_group.id', Mongo::ASCENDING], ['object_group.type', Mongo::ASCENDING]]
+
       index [['receivers.id', Mongo::ASCENDING], ['receivers.type', Mongo::ASCENDING]]
           
       validates_presence_of :actor, :verb
@@ -26,7 +32,7 @@ module Streama
     
     module ClassMethods
 
-      # Defines a new activity type and registers a definition
+      # Defines a new Activity2 type and registers a definition
       #
       # @param [ String ] name The name of the activity
       #
@@ -112,6 +118,38 @@ module Streama
           end
           write_attribute(type, hash)      
         end
+
+        [:object_group, :target_group].each do |type|
+          next unless object = load_instance(type)
+
+          if object.size > 0
+
+            class_sym = object.first.class.name.underscore.to_sym
+
+            object.each do |cur_obj|
+              raise Streama::InvalidData.new(class_sym) unless cur_obj.class.name.underscore.to_sym == class_sym
+            end
+
+            raise Streama::InvalidData.new(class_sym) unless definition.send(type).has_key?(class_sym)
+
+            cur_array = []
+            object.each do |cur_obj|
+              hash = {'id' => cur_obj.id, 'type' => cur_obj.class.name}
+
+              if fields = definition.send(type)[class_sym][:cache]
+                fields.each do |field|
+                  raise Streama::InvalidField.new(field) unless cur_obj.respond_to?(field)
+                  hash[field.to_s] = cur_obj.send(field)
+                end
+              end
+              cur_array << hash
+            end
+
+            write_attribute(type, cur_array)
+
+          end
+        end
+
       end
     
       def definition
