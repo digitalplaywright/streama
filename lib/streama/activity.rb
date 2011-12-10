@@ -7,15 +7,16 @@ module Streama
       include Mongoid::Document
       include Mongoid::Timestamps
     
-      field :verb,        :type => Symbol
-      field :actor,       :type => Hash
-      field :object,      :type => Hash
-      field :object_group,  :type => Array
-      field :target_group,  :type => Array
+      field :verb,         :type => Symbol
+      field :actor,        :type => Hash
+      field :object,       :type => Hash
+      field :object_group, :type => Array
+      field :target_group, :type => Array
+      field :options,      :type => Hash
 
 
-      field :target,      :type => Hash
-      field :receivers,   :type => Array
+      field :target,       :type => Hash
+      field :receivers,    :type => Array
           
       index :name
       index [['actor._id', Mongo::ASCENDING], ['actor._type', Mongo::ASCENDING]]
@@ -60,7 +61,8 @@ module Streama
       # @return [Streama::Activity] An Activity instance with data
       def publish(verb, data)
         receivers = data.delete(:receivers)
-        new({:verb => verb}.merge(data)).publish(:receivers => receivers)
+        options   = data.delete(:options)
+        new({:verb => verb}.merge(data)).publish(:receivers => receivers, :options => options)
       end
       
       def stream_for(actor, options={})
@@ -81,6 +83,7 @@ module Streama
       def publish(options = {})
         actor = load_instance(:actor)        
         self.receivers = (options[:receivers] || actor.followers).map { |r| { :id => r.id, :type => r.class.to_s } }
+        self.options   = options[:options] if options[:options] != nil
         self.save
         self
       end
