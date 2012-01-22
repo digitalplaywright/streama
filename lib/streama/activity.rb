@@ -124,35 +124,41 @@ module Streama
           write_attribute(type, hash)      
         end
 
-        [:object_group, :target_group].each do |type|
-          next unless object = load_instance(type)
+        [:object_group, :target_group].each do |group|
 
-          if object.size > 0
+          cur_array = []
 
-            class_sym = object.first.class.name.underscore.to_sym
 
-            object.each do |cur_obj|
-              raise Streama::InvalidData.new(class_sym) unless cur_obj.class.name.underscore.to_sym == class_sym
-            end
+          grp_object =  self.send(group)
 
-            raise Streama::InvalidData.new(class_sym) unless definition.send(type).has_key?(class_sym)
+          next unless grp_object
 
-            cur_array = []
-            object.each do |cur_obj|
-              hash = {'id' => cur_obj.id, 'type' => cur_obj.class.name}
+          grp_object.each do |cur_obj|
 
-              if fields = definition.send(type)[class_sym][:cache]
-                fields.each do |field|
-                  raise Streama::InvalidField.new(field) unless cur_obj.respond_to?(field)
-                  hash[field.to_s] = cur_obj.send(field)
-                end
+            next unless object = cur_obj.is_a?(Hash) ? cur_obj['type'].to_s.camelcase.constantize.find(cur_obj['id']) : cur_obj
+
+
+            class_sym = object.class.name.underscore.to_sym
+
+            raise Streama::InvalidData.new(class_sym) unless definition.send(group).has_key?(class_sym)
+
+
+            hash = {'id' => object.id, 'type' => object.class.name}
+
+            if fields = definition.send(group)[class_sym][:cache]
+              fields.each do |field|
+                raise Streama::InvalidField.new(field) unless object.respond_to?(field)
+                hash[field.to_s] = object.send(field)
               end
-              cur_array << hash
             end
+            cur_array << hash
 
-            write_attribute(type, cur_array)
 
           end
+
+          write_attribute(group, cur_array)
+
+
         end
 
       end
