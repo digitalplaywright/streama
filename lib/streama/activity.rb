@@ -11,19 +11,19 @@ module Streama
       field :actor,        :type => Hash
       field :object,       :type => Hash
       field :object_group, :type => Array
-      field :target_group, :type => Array
+      field :act_target_group, :type => Array
       field :options,      :type => Hash
 
 
-      field :target,       :type => Hash
+      field :act_target,       :type => Hash
       field :receivers,    :type => Array
           
       index :name
       index [['actor._id', Mongo::ASCENDING], ['actor._type', Mongo::ASCENDING]]
       index [['object._id', Mongo::ASCENDING], ['object._type', Mongo::ASCENDING]]
-      index [['target._id', Mongo::ASCENDING], ['target._type', Mongo::ASCENDING]]
+      index [['act_target._id', Mongo::ASCENDING], ['act_target._type', Mongo::ASCENDING]]
       index [['object_group.id', Mongo::ASCENDING], ['object_group.type', Mongo::ASCENDING]]
-      index [['target_group.id', Mongo::ASCENDING], ['target_group.type', Mongo::ASCENDING]]
+      index [['act_target_group.id', Mongo::ASCENDING], ['act_target_group.type', Mongo::ASCENDING]]
 
 
       index [['receivers.id', Mongo::ASCENDING], ['receivers.type', Mongo::ASCENDING]]
@@ -43,7 +43,7 @@ module Streama
       #   activity(:enquiry) do
       #     actor :user, :cache => [:full_name]
       #     object :enquiry, :cache => [:subject]
-      #     target :listing, :cache => [:title]
+      #     act_target :listing, :cache => [:title]
       #   end
       #
       # @return [Definition] Returns the registered definition
@@ -88,9 +88,9 @@ module Streama
         self
       end
       
-      # Returns an instance of an actor, object or target
+      # Returns an instance of an actor, object or act_target
       #
-      # @param [ Symbol ] type The data type (actor, object, target) to return an instance for.
+      # @param [ Symbol ] type The data type (actor, object, act_target) to return an instance for.
       #
       # @return [Mongoid::Document] document A mongoid document instance
       def load_instance(type)
@@ -106,7 +106,7 @@ module Streama
         
       def assign_data
       
-        [:actor, :object, :target].each do |type|
+        [:actor, :object, :act_target].each do |type|
           next unless object = load_instance(type)
 
           class_sym = object.class.name.underscore.to_sym
@@ -124,7 +124,7 @@ module Streama
           write_attribute(type, hash)      
         end
 
-        [:object_group, :target_group].each do |group|
+        [:object_group, :act_target_group].each do |group|
 
           cur_array = []
 

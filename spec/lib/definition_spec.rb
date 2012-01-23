@@ -6,7 +6,7 @@ describe "Definition" do
     dsl = Streama::DefinitionDSL.new(:new_enquiry)
     dsl.actor(:user, :cache => [:id, :full_name])
     dsl.object(:enquiry, :cache => [:id, :full_name])
-    dsl.target(:listing, :cache => [:id, :name, :full_address])
+    dsl.act_target(:listing, :cache => [:id, :name, :full_address])
     dsl
   end
   
@@ -23,8 +23,8 @@ describe "Definition" do
       @definition.object.has_key?(:enquiry).should be true
     end
     
-    it "assigns @target" do
-      @definition.target.has_key?(:listing).should be true
+    it "assigns @act_target" do
+      @definition.act_target.has_key?(:listing).should be true
     end
     
   end

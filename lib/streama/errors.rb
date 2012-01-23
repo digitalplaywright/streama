@@ -7,7 +7,7 @@ module Streama
   end
   
   # This error is raised when an object isn't defined
-  # as an actor, object or target
+  # as an actor, object or act_target
   #
   # Example:
   #

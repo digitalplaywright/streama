@@ -11,7 +11,7 @@ describe "Activity" do
       @definition = Activity.activity(:test_activity) do
         actor :user, :cache => [:full_name]
         object :listing, :cache => [:title, :full_address]
-        target :listing, :cache => [:title]
+        act_target :listing, :cache => [:title]
       end
       
       @definition.is_a?(Streama::Definition).should be true
@@ -28,7 +28,7 @@ describe "Activity" do
     end
     
     it "pushes activity to receivers" do
-      @activity = Activity.publish(:new_enquiry, {:actor => user, :object => enquiry, :target => listing, :receivers => @send_to})
+      @activity = Activity.publish(:new_enquiry, {:actor => user, :object => enquiry, :act_target => listing, :receivers => @send_to})
       @activity.receivers.size.should == 2
     end
 
@@ -36,14 +36,14 @@ describe "Activity" do
     context "when activity not cached" do
       
       it "pushes activity to receivers" do
-        @activity = Activity.publish(:new_enquiry_without_cache, {:actor => user, :object => enquiry, :target => listing, :receivers => @send_to})
+        @activity = Activity.publish(:new_enquiry_without_cache, {:actor => user, :object => enquiry, :act_target => listing, :receivers => @send_to})
         @activity.receivers.size.should == 2
       end
       
     end
     
     it "overrides the recievers if option passed" do
-      @activity = Activity.publish(:new_enquiry, {:actor => user, :object => enquiry, :target => listing, :receivers => @send_to})
+      @activity = Activity.publish(:new_enquiry, {:actor => user, :object => enquiry, :act_target => listing, :receivers => @send_to})
       @activity.receivers.size.should == 2
     end
     
@@ -52,7 +52,7 @@ describe "Activity" do
     context "when republishing"
       before :each do
         @actor = user
-        @activity = Activity.publish(:new_enquiry, {:actor => @actor, :object => enquiry, :target => listing})
+        @activity = Activity.publish(:new_enquiry, {:actor => @actor, :object => enquiry, :act_target => listing})
         @activity.publish
       end
       
@@ -66,7 +66,7 @@ describe "Activity" do
   
   describe ".publish" do
     it "creates a new activity" do
-      activity = Activity.publish(:new_enquiry, {:actor => user, :object => enquiry, :target => listing})
+      activity = Activity.publish(:new_enquiry, {:actor => user, :object => enquiry, :act_target => listing})
       activity.should be_an_instance_of Activity
     end
   end
@@ -75,7 +75,7 @@ describe "Activity" do
     
     before :each do
       @user = user
-      @activity = Activity.publish(:new_enquiry, {:actor => @user, :object => enquiry, :target => listing})
+      @activity = Activity.publish(:new_enquiry, {:actor => @user, :object => enquiry, :act_target => listing})
     end
     
     it "reloads instances and updates activities stored data" do
@@ -93,7 +93,7 @@ describe "Activity" do
   describe "#load_instance" do
     
     before :each do
-      @activity = Activity.publish(:new_enquiry, {:actor => user, :object => enquiry, :target => listing})
+      @activity = Activity.publish(:new_enquiry, {:actor => user, :object => enquiry, :act_target => listing})
       @activity = Activity.last
     end
     
@@ -105,8 +105,8 @@ describe "Activity" do
       @activity.load_instance(:object).should be_instance_of Enquiry
     end
     
-    it "loads a target instance" do
-      @activity.load_instance(:target).should be_instance_of Listing
+    it "loads a act_target instance" do
+      @activity.load_instance(:act_target).should be_instance_of Listing
     end
     
   end

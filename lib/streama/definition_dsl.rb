@@ -9,9 +9,9 @@ module Streama
         :name => name.to_sym,
         :actor => {}, 
         :object => {}, 
-        :target => {},
+        :act_target => {},
         :object_group => {},
-        :target_group => {}
+        :act_target_group => {}
       }
     end
     
@@ -24,7 +24,7 @@ module Streama
         end
       end
     end
-    data_methods :actor, :object, :target, :object_group, :target_group
+    data_methods :actor, :object, :act_target, :object_group, :act_target_group
 
   end
   
