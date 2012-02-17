@@ -4,8 +4,8 @@ module Streama
     
     included do
       
-      include Mongoid::Document
-      include Mongoid::Timestamps
+      #include Mongoid::Document
+      #include Mongoid::Timestamps
     
       field :verb,         :type => Symbol
       field :actor,        :type => Hash
@@ -74,100 +74,98 @@ module Streama
     end
 
 
-    module InstanceMethods
-      
-      # Publishes the activity to the receivers
-      #
-      # @param [ Hash ] options The options to publish with.
-      #
-      def publish(options = {})
-        actor = load_instance(:actor)        
-        self.receivers = (options[:receivers] || actor.followers).map { |r| { :id => r.id, :type => r.class.to_s } }
-        self.options   = options[:options] if options[:options] != nil
-        self.save
-        self
+
+    # Publishes the activity to the receivers
+    #
+    # @param [ Hash ] options The options to publish with.
+    #
+    def publish(options = {})
+      actor = load_instance(:actor)
+      self.receivers = (options[:receivers] || actor.followers).map { |r| { :id => r.id, :type => r.class.to_s } }
+      self.options   = options[:options] if options[:options] != nil
+      self.save
+      self
+    end
+
+    # Returns an instance of an actor, object or act_target
+    #
+    # @param [ Symbol ] type The data type (actor, object, act_target) to return an instance for.
+    #
+    # @return [Mongoid::Document] document A mongoid document instance
+    def load_instance(type)
+      (data = self.send(type)).is_a?(Hash) ? data['type'].to_s.camelcase.constantize.find(data['id']) : data
+    end
+
+    def refresh_data
+      assign_data
+      save(:validate => false)
+    end
+
+    protected
+
+    def assign_data
+
+      [:actor, :object, :act_target].each do |type|
+        next unless object = load_instance(type)
+
+        class_sym = object.class.name.underscore.to_sym
+
+        raise Streama::InvalidData.new(class_sym) unless definition.send(type).has_key?(class_sym)
+
+        hash = {'id' => object.id, 'type' => object.class.name}
+
+        if fields = definition.send(type)[class_sym].try(:[],:cache)
+          fields.each do |field|
+            raise Streama::InvalidField.new(field) unless object.respond_to?(field)
+            hash[field.to_s] = object.send(field)
+          end
+        end
+        write_attribute(type, hash)
       end
-      
-      # Returns an instance of an actor, object or act_target
-      #
-      # @param [ Symbol ] type The data type (actor, object, act_target) to return an instance for.
-      #
-      # @return [Mongoid::Document] document A mongoid document instance
-      def load_instance(type)
-        (data = self.send(type)).is_a?(Hash) ? data['type'].to_s.camelcase.constantize.find(data['id']) : data
-      end
-    
-      def refresh_data
-        assign_data
-        save(:validate => false)
-      end
-    
-      protected
-        
-      def assign_data
-      
-        [:actor, :object, :act_target].each do |type|
-          next unless object = load_instance(type)
+
+      [:object_group, :act_target_group].each do |group|
+
+        cur_array = []
+
+
+        grp_object =  self.send(group)
+
+        next unless grp_object
+
+        grp_object.each do |cur_obj|
+
+          next unless object = cur_obj.is_a?(Hash) ? cur_obj['type'].to_s.camelcase.constantize.find(cur_obj['id']) : cur_obj
+
 
           class_sym = object.class.name.underscore.to_sym
 
-          raise Streama::InvalidData.new(class_sym) unless definition.send(type).has_key?(class_sym)
-      
+          raise Streama::InvalidData.new(class_sym) unless definition.send(group).has_key?(class_sym)
+
+
           hash = {'id' => object.id, 'type' => object.class.name}
-                
-          if fields = definition.send(type)[class_sym].try(:[],:cache)
+
+          if fields = definition.send(group)[class_sym][:cache]
             fields.each do |field|
               raise Streama::InvalidField.new(field) unless object.respond_to?(field)
               hash[field.to_s] = object.send(field)
             end
           end
-          write_attribute(type, hash)      
-        end
-
-        [:object_group, :act_target_group].each do |group|
-
-          cur_array = []
-
-
-          grp_object =  self.send(group)
-
-          next unless grp_object
-
-          grp_object.each do |cur_obj|
-
-            next unless object = cur_obj.is_a?(Hash) ? cur_obj['type'].to_s.camelcase.constantize.find(cur_obj['id']) : cur_obj
-
-
-            class_sym = object.class.name.underscore.to_sym
-
-            raise Streama::InvalidData.new(class_sym) unless definition.send(group).has_key?(class_sym)
-
-
-            hash = {'id' => object.id, 'type' => object.class.name}
-
-            if fields = definition.send(group)[class_sym][:cache]
-              fields.each do |field|
-                raise Streama::InvalidField.new(field) unless object.respond_to?(field)
-                hash[field.to_s] = object.send(field)
-              end
-            end
-            cur_array << hash
-
-
-          end
-
-          write_attribute(group, cur_array)
+          cur_array << hash
 
 
         end
 
+        write_attribute(group, cur_array)
+
+
       end
-    
-      def definition
-        @definition ||= Streama::Definition.find(verb)
-      end
-      
+
     end
-    
+
+    def definition
+      @definition ||= Streama::Definition.find(verb)
+    end
+
+
   end
 end
