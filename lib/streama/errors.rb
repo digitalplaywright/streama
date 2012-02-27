@@ -6,8 +6,8 @@ module Streama
   class InvalidActivity < StreamaError
   end
   
-  # This error is raised when an object isn't defined
-  # as an actor, object or act_target
+  # This error is raised when an act_object isn't defined
+  # as an actor, act_object or act_target
   #
   # Example:
   #

@@ -9,8 +9,8 @@ module Streama
     
       field :verb,         :type => Symbol
       field :actor,        :type => Hash
-      field :object,       :type => Hash
-      field :object_group, :type => Array
+      field :act_object,       :type => Hash
+      field :act_object_group, :type => Array
       field :act_target_group, :type => Array
       field :options,      :type => Hash
 
@@ -20,9 +20,9 @@ module Streama
           
       index :name
       index [['actor._id', Mongo::ASCENDING], ['actor._type', Mongo::ASCENDING]]
-      index [['object._id', Mongo::ASCENDING], ['object._type', Mongo::ASCENDING]]
+      index [['act_object._id', Mongo::ASCENDING], ['act_object._type', Mongo::ASCENDING]]
       index [['act_target._id', Mongo::ASCENDING], ['act_target._type', Mongo::ASCENDING]]
-      index [['object_group.id', Mongo::ASCENDING], ['object_group.type', Mongo::ASCENDING]]
+      index [['act_object_group.id', Mongo::ASCENDING], ['act_object_group.type', Mongo::ASCENDING]]
       index [['act_target_group.id', Mongo::ASCENDING], ['act_target_group.type', Mongo::ASCENDING]]
 
 
@@ -42,7 +42,7 @@ module Streama
       # @example Define a new activity
       #   activity(:enquiry) do
       #     actor :user, :cache => [:full_name]
-      #     object :enquiry, :cache => [:subject]
+      #     act_object :enquiry, :cache => [:subject]
       #     act_target :listing, :cache => [:title]
       #   end
       #
@@ -87,9 +87,9 @@ module Streama
       self
     end
 
-    # Returns an instance of an actor, object or act_target
+    # Returns an instance of an actor, act_object or act_target
     #
-    # @param [ Symbol ] type The data type (actor, object, act_target) to return an instance for.
+    # @param [ Symbol ] type The data type (actor, act_object, act_target) to return an instance for.
     #
     # @return [Mongoid::Document] document A mongoid document instance
     def load_instance(type)
@@ -105,25 +105,25 @@ module Streama
 
     def assign_data
 
-      [:actor, :object, :act_target].each do |type|
-        next unless object = load_instance(type)
+      [:actor, :act_object, :act_target].each do |type|
+        next unless act_object = load_instance(type)
 
-        class_sym = object.class.name.underscore.to_sym
+        class_sym = act_object.class.name.underscore.to_sym
 
         raise Streama::InvalidData.new(class_sym) unless definition.send(type).has_key?(class_sym)
 
-        hash = {'id' => object.id, 'type' => object.class.name}
+        hash = {'id' => act_object.id, 'type' => act_object.class.name}
 
         if fields = definition.send(type)[class_sym].try(:[],:cache)
           fields.each do |field|
-            raise Streama::InvalidField.new(field) unless object.respond_to?(field)
-            hash[field.to_s] = object.send(field)
+            raise Streama::InvalidField.new(field) unless act_object.respond_to?(field)
+            hash[field.to_s] = act_object.send(field)
           end
         end
         write_attribute(type, hash)
       end
 
-      [:object_group, :act_target_group].each do |group|
+      [:act_object_group, :act_target_group].each do |group|
 
         cur_array = []
 
@@ -134,20 +134,20 @@ module Streama
 
         grp_object.each do |cur_obj|
 
-          next unless object = cur_obj.is_a?(Hash) ? cur_obj['type'].to_s.camelcase.constantize.find(cur_obj['id']) : cur_obj
+          next unless act_object = cur_obj.is_a?(Hash) ? cur_obj['type'].to_s.camelcase.constantize.find(cur_obj['id']) : cur_obj
 
 
-          class_sym = object.class.name.underscore.to_sym
+          class_sym = act_object.class.name.underscore.to_sym
 
           raise Streama::InvalidData.new(class_sym) unless definition.send(group).has_key?(class_sym)
 
 
-          hash = {'id' => object.id, 'type' => object.class.name}
+          hash = {'id' => act_object.id, 'type' => act_object.class.name}
 
           if fields = definition.send(group)[class_sym][:cache]
             fields.each do |field|
-              raise Streama::InvalidField.new(field) unless object.respond_to?(field)
-              hash[field.to_s] = object.send(field)
+              raise Streama::InvalidField.new(field) unless act_object.respond_to?(field)
+              hash[field.to_s] = act_object.send(field)
             end
           end
           cur_array << hash

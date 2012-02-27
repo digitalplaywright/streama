@@ -8,9 +8,9 @@ module Streama
       @attributes = {
         :name => name.to_sym,
         :actor => {}, 
-        :object => {}, 
+        :act_object => {},
         :act_target => {},
-        :object_group => {},
+        :act_object_group => {},
         :act_target_group => {}
       }
     end
@@ -24,7 +24,7 @@ module Streama
         end
       end
     end
-    data_methods :actor, :object, :act_target, :object_group, :act_target_group
+    data_methods :actor, :act_object, :act_target, :act_object_group, :act_target_group
 
   end
   

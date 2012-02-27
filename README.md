@@ -16,7 +16,7 @@ Streama is a simple Ruby activity stream gem for use with the Mongoid ODM framew
 
 Create an Activity model and define the activities and the fields you would like to cache within the activity.
 
-An activity consists of an actor, a verb, an object, and a target. 
+An activity consists of an actor, a verb, an act_object, and a target.
 
 ``` ruby
 class Activity
@@ -24,7 +24,7 @@ class Activity
 
   activity :new_enquiry do
     actor :user, :cache => [:full_name]
-    object :enquiry, :cache => [:subject, :comment]
+    act_object :enquiry, :cache => [:subject, :comment]
     target :listing, :cache => [:title]
   end
 
@@ -33,11 +33,11 @@ end
 
 The activity verb is implied from the activity name, in the above example the verb is :new_enquiry
 
-The object may be the entity performing the activity, or the entity on which the activity was performed.
-e.g John(actor) shared a video(object)
+The act_object may be the entity performing the activity, or the entity on which the activity was performed.
+e.g John(actor) shared a video(act_object)
 
-The target is the object that the verb is enacted on.
-e.g. Geraldine(actor) posted a photo(object) to her album(target)
+The target is the act_object that the verb is enacted on.
+e.g. Geraldine(actor) posted a photo(act_object) to her album(target)
 
 This is based on the Activity Streams 1.0 specification (http://activitystrea.ms)
 
@@ -71,19 +71,19 @@ Activity.create_indexes
 In your controller or background worker:
 
 ``` ruby
-current_user.publish_activity(:new_enquiry, :object => @enquiry, :target => @listing)
+current_user.publish_activity(:new_enquiry, :act_object => @enquiry, :target => @listing)
 ```
   
-This will publish the activity to the mongoid objects returned by the #followers method in the Actor.
+This will publish the activity to the mongoid act_objects returned by the #followers method in the Actor.
 
 To send your activity to different receievers, pass in an additional :receivers parameter.
 
 ``` ruby
-current_user.publish_activity(:new_enquiry, :object => @enquiry, :target => @listing, :receivers => :friends) # calls friends method
+current_user.publish_activity(:new_enquiry, :act_object => @enquiry, :target => @listing, :receivers => :friends) # calls friends method
 ```
 
 ``` ruby
-current_user.publish_activity(:new_enquiry, :object => @enquiry, :target => @listing, :receivers => current_user.find(:all, :conditions => {:group_id => mygroup}))
+current_user.publish_activity(:new_enquiry, :act_object => @enquiry, :target => @listing, :receivers => current_user.find(:all, :conditions => {:group_id => mygroup}))
 ```
 
 ## Retrieving Activity
@@ -99,7 +99,7 @@ To retrieve and filter to a particular activity type
 ``` ruby
 current_user.activity_stream(:type => :activity_verb)
 ```
-If you need to return the instance of an :actor, :object or :target from an activity call the Activity#load_instance method
+If you need to return the instance of an :actor, :act_object or :target from an activity call the Activity#load_instance method
 
 ``` ruby
 activity.load_instance(:actor)

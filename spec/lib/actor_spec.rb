@@ -12,12 +12,12 @@ describe "Actor" do
     end
 
     it "pushes activity to receivers" do
-      activity = user.publish_activity(:new_enquiry, :object => enquiry, :act_target => listing)
+      activity = user.publish_activity(:new_enquiry, :act_object => enquiry, :act_target => listing)
       activity.receivers.size == 6
     end
 
     it "pushes to a defined stream" do
-      activity = user.publish_activity(:new_enquiry, :object => enquiry, :act_target => listing, :receivers => :friends)
+      activity = user.publish_activity(:new_enquiry, :act_object => enquiry, :act_target => listing, :receivers => :friends)
       activity.receivers.size == 6
     end
     
@@ -27,8 +27,8 @@ describe "Actor" do
     
     before :each do
       2.times { |n| User.create(:full_name => "Receiver #{n}") }
-      user.publish_activity(:new_enquiry, :object => enquiry, :act_target => listing)
-      user.publish_activity(:new_comment, :object => listing)
+      user.publish_activity(:new_enquiry, :act_object => enquiry, :act_target => listing)
+      user.publish_activity(:new_comment, :act_object => listing)
     end
 
     it "retrieves the stream for an actor" do

@@ -21,10 +21,10 @@ describe "Definition" do
     dsl.attributes[:actor].should eq :user => { :cache=>[:id, :full_name] }, :company => { :cache=>[:id, :name] }
   end
   
-  it "adds an object to the definition" do
+  it "adds an act_object to the definition" do
     dsl = definition_dsl
-    dsl.object(:listing, :cache => [:id, :title])
-    dsl.attributes[:object].should eq :listing => { :cache=>[:id, :title] }
+    dsl.act_object(:listing, :cache => [:id, :title])
+    dsl.attributes[:act_object].should eq :listing => { :cache=>[:id, :title] }
   end
 
   it "adds a act_target to the definition" do
