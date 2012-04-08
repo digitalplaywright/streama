@@ -7,15 +7,17 @@ module Streama
       #include Mongoid::Document
       #include Mongoid::Timestamps
     
-      field :verb,         :type => Symbol
-      field :actor,        :type => Hash
+      field :verb,             :type => Symbol
+      field :actor,            :type => Hash
       field :act_object,       :type => Hash
+      field :act_target,       :type => Hash
+
       field :act_object_group, :type => Array
       field :act_target_group, :type => Array
-      field :options,      :type => Hash
+
+      field :options,          :type => Hash
 
 
-      field :act_target,       :type => Hash
       field :receivers,    :type => Array
           
       index :name
@@ -82,7 +84,9 @@ module Streama
     def publish(options = {})
       actor = load_instance(:actor)
       self.receivers = (options[:receivers] || actor.followers).map { |r| { :id => r.id, :type => r.class.to_s } }
-      self.options   = options[:options] if options[:options] != nil
+      cur_options    = options[:options] if options[:options] != nil
+      assign_data(cur_options)
+
       self.save
       self
     end
@@ -97,13 +101,12 @@ module Streama
     end
 
     def refresh_data
-      assign_data
       save(:validate => false)
     end
 
     protected
 
-    def assign_data
+    def assign_data(arguments = {})
 
       [:actor, :act_object, :act_target].each do |type|
         next unless act_object = load_instance(type)
@@ -155,10 +158,28 @@ module Streama
 
         end
 
+
+
+
+
         write_attribute(group, cur_array)
 
 
       end
+
+      def_options = definition.send(:options)
+      def_options.each do |cur_option|
+        act_object = arguments[cur_option]
+
+        if act_object
+          self.options[cur_option] = act_object
+        else
+          #all options defined must be used
+          raise Streama::InvalidData.new(act_object[0])
+        end
+      end
+
+
 
     end
 

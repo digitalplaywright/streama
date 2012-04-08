@@ -11,8 +11,20 @@ module Streama
         :act_object => {},
         :act_target => {},
         :act_object_group => {},
-        :act_target_group => {}
+        :act_target_group => {},
+        :options    => {}
+
       }
+    end
+
+    def add_option(option)
+      @attributes[:options] ||= {}
+
+      @attributes[:options] << option
+    end
+
+    def option(text)
+      add_option( text )
     end
     
     delegate :[], :to => :@attributes

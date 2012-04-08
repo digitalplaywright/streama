@@ -2,7 +2,7 @@ module Streama
   
   class Definition
     
-    attr_reader :name, :actor, :act_object, :act_target, :act_object_group, :act_target_group, :receivers
+    attr_reader :name, :actor, :act_object, :act_target, :act_object_group, :options, :act_target_group, :receivers
     
     # @param dsl [Streama::DefinitionDSL] A DSL act_object
     def initialize(definition)
@@ -12,6 +12,7 @@ module Streama
       @act_target = definition[:act_target] || {}
       @act_object_group = definition[:act_object_group] || {}
       @act_target_group = definition[:act_target_group] || {}
+      @options    = definition[:options]    || {}
     end
     
     #
