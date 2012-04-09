@@ -31,8 +31,7 @@ module Streama
       index [['receivers.id', Mongo::ASCENDING], ['receivers.type', Mongo::ASCENDING]]
           
       validates_presence_of :actor, :verb
-      before_save :assign_data
-      
+
     end
     
     module ClassMethods
@@ -80,11 +79,6 @@ module Streama
     # @param [ Hash ] options The options to publish with.
     #
     def publish(data = {})
-      actor = load_instance(:actor)
-
-      self.receivers = ( data.delete(:receivers) || actor.followers ).map { |r| { :id => r.id, :type => r.class.to_s } }
-      self.verb      = data.delete(:verb)
-
       assign_properties(data)
 
       self.save
@@ -107,6 +101,17 @@ module Streama
     protected
 
     def assign_properties(data = {})
+
+      self.verb      = data.delete(:verb)
+
+      cur_receivers  = data.delete(:receivers)
+
+      if cur_receivers == nil && data[:actor].respond_to?(:followers)
+        data[:actor].followers
+      end
+
+      self.receivers = cur_receivers.map { |r| { :id => r.id, :type => r.class.to_s } }
+
 
       [:actor, :act_object, :act_target].each do |type|
 
