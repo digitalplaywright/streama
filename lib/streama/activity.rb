@@ -1,12 +1,12 @@
 module Streama
   module Activity
     extend ActiveSupport::Concern
-    
+
     included do
-      
+
       #include Mongoid::Document
       #include Mongoid::Timestamps
-    
+
       field :verb,             :type => Symbol
       field :actor,            :type => Hash
       field :act_object,       :type => Hash
@@ -15,11 +15,11 @@ module Streama
       field :act_object_group, :type => Array
       field :act_target_group, :type => Array
 
-      field :options,          :type => Hash
+      field :options,          :type => Hash, :default => {}
 
 
       field :receivers,    :type => Array
-          
+
       index :name
       index [['actor._id', Mongo::ASCENDING], ['actor._type', Mongo::ASCENDING]]
       index [['act_object._id', Mongo::ASCENDING], ['act_object._type', Mongo::ASCENDING]]
@@ -29,11 +29,11 @@ module Streama
 
 
       index [['receivers.id', Mongo::ASCENDING], ['receivers.type', Mongo::ASCENDING]]
-          
+
       validates_presence_of :actor, :verb
 
     end
-    
+
     module ClassMethods
 
       # Defines a new Activity2 type and registers a definition
@@ -63,13 +63,13 @@ module Streama
       def publish(verb, data)
         new.publish({:verb => verb}.merge(data))
       end
-      
+
       def stream_for(actor, options={})
         query = {:receivers => {'$elemMatch' => {:id => actor.id, :type => actor.class.to_s}}}
         query.merge!({:verb => options[:type]}) if options[:type]
         self.where(query).without(:receivers).desc(:created_at)
       end
-      
+
     end
 
 
@@ -110,25 +110,28 @@ module Streama
         data[:actor].followers
       end
 
-      self.receivers = cur_receivers.map { |r| { :id => r.id, :type => r.class.to_s } }
-
+      if cur_receivers
+        self.receivers = cur_receivers.map { |r| { :id => r.id, :type => r.class.to_s } }
+      end
 
       [:actor, :act_object, :act_target].each do |type|
 
         cur_object = data[type]
 
         if cur_object == nil
-          if definition.send(type.to_sym) != nil
-            raise verb.to_json
-            raise Streama::InvalidData.new(type)
-          else
+          if definition.send(type).empty?
             next
+
+          else
+            raise definition.to_json
+            raise Streama::InvalidData.new(type)
           end
         end
 
         class_sym = cur_object.class.name.to_sym
 
-        raise Streama::InvalidData.new(class_sym) unless definition.send(type) == class_sym
+        raise class_sym.to_s+type.to_s+class_sym.to_s+definition.send(type).to_s unless definition.send(type).has_key?(class_sym)
+        #raise Streama::InvalidData.new(class_sym) unless definition.send(type) == class_sym
 
 
         hash = {'id' => cur_object.id, 'type' => cur_object.class.name}
@@ -150,20 +153,21 @@ module Streama
 
         cur_array = []
 
-        grp_object = data[type]
+        grp_object = data[group]
 
         if grp_object == nil
-          if definition.send(group.to_sym) != nil
+          if definition.send(group.to_sym).empty?
+            next
+
+          else
             raise verb.to_json
             raise Streama::InvalidData.new(group)
-          else
-            next
           end
         end
 
         grp_object.each do |cur_obj|
 
-          class_sym = cur_obj.class.name.underscore.to_sym
+          class_sym = cur_object.class.name.to_sym
 
           raise Streama::InvalidData.new(class_sym) unless definition.send(group).has_key?(class_sym)
 
