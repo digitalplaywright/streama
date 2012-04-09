@@ -12,13 +12,13 @@ module Streama
         :act_target => {},
         :act_object_group => {},
         :act_target_group => {},
-        :options    => {}
+        :options    => []
 
       }
     end
 
     def add_option(option)
-      @attributes[:options] ||= {}
+      @attributes[:options] ||= []
 
       @attributes[:options] << option
     end

@@ -62,9 +62,7 @@ module Streama
       #
       # @return [Streama::Activity] An Activity instance with data
       def publish(verb, data)
-        receivers = data.delete(:receivers)
-        options   = data.delete(:options)
-        new({:verb => verb}.merge(data)).publish(:receivers => receivers, :options => options)
+        new.publish({:verb => verb, :receivers => receivers}.merge(data))
       end
       
       def stream_for(actor, options={})
@@ -81,11 +79,13 @@ module Streama
     #
     # @param [ Hash ] options The options to publish with.
     #
-    def publish(options = {})
+    def publish(data = {})
       actor = load_instance(:actor)
-      self.receivers = (options[:receivers] || actor.followers).map { |r| { :id => r.id, :type => r.class.to_s } }
-      cur_options    = options[:options] if options[:options] != nil
-      assign_data(cur_options)
+
+      self.receivers = ( data.delete(:receivers) || actor.followers ).map { |r| { :id => r.id, :type => r.class.to_s } }
+      self.verb      = data.delete(:verb)
+
+      assign_properties(data)
 
       self.save
       self
@@ -106,51 +106,69 @@ module Streama
 
     protected
 
-    def assign_data(arguments = {})
+    def assign_properties(data = {})
 
       [:actor, :act_object, :act_target].each do |type|
-        next unless act_object = load_instance(type)
 
-        class_sym = act_object.class.name.underscore.to_sym
+        cur_object = data[type]
 
-        raise Streama::InvalidData.new(class_sym) unless definition.send(type).has_key?(class_sym)
+        if cur_object == nil
+          if definition.send(type.to_sym) != nil
+            raise verb.to_json
+            raise Streama::InvalidData.new(type)
+          else
+            next
+          end
+        end
 
-        hash = {'id' => act_object.id, 'type' => act_object.class.name}
+        class_sym = cur_object.class.name.to_sym
+
+        raise Streama::InvalidData.new(class_sym) unless definition.send(type) == class_sym
+
+
+        hash = {'id' => cur_object.id, 'type' => cur_object.class.name}
 
         if fields = definition.send(type)[class_sym].try(:[],:cache)
           fields.each do |field|
-            raise Streama::InvalidField.new(field) unless act_object.respond_to?(field)
-            hash[field.to_s] = act_object.send(field)
+            raise Streama::InvalidField.new(field) unless cur_object.respond_to?(field)
+            hash[field.to_s] = cur_object.send(field)
           end
         end
+
         write_attribute(type, hash)
+
+        data.delete(type)
+
       end
 
       [:act_object_group, :act_target_group].each do |group|
 
         cur_array = []
 
+        grp_object = data[type]
 
-        grp_object =  self.send(group)
-
-        next unless grp_object
+        if grp_object == nil
+          if definition.send(group.to_sym) != nil
+            raise verb.to_json
+            raise Streama::InvalidData.new(group)
+          else
+            next
+          end
+        end
 
         grp_object.each do |cur_obj|
 
-          next unless act_object = cur_obj.is_a?(Hash) ? cur_obj['type'].to_s.camelcase.constantize.find(cur_obj['id']) : cur_obj
-
-
-          class_sym = act_object.class.name.underscore.to_sym
+          class_sym = cur_obj.class.name.underscore.to_sym
 
           raise Streama::InvalidData.new(class_sym) unless definition.send(group).has_key?(class_sym)
 
 
-          hash = {'id' => act_object.id, 'type' => act_object.class.name}
+          hash = {'id' => cur_obj.id, 'type' => cur_obj.class.name}
 
           if fields = definition.send(group)[class_sym][:cache]
             fields.each do |field|
-              raise Streama::InvalidField.new(field) unless act_object.respond_to?(field)
-              hash[field.to_s] = act_object.send(field)
+              raise Streama::InvalidField.new(field) unless cur_obj.respond_to?(field)
+              hash[field.to_s] = cur_obj.send(field)
             end
           end
           cur_array << hash
@@ -159,17 +177,15 @@ module Streama
         end
 
 
-
-
-
         write_attribute(group, cur_array)
 
+        data.delete(group)
 
       end
 
       def_options = definition.send(:options)
       def_options.each do |cur_option|
-        act_object = arguments[cur_option]
+        act_object = data[cur_option]
 
         if act_object
           self.options[cur_option] = act_object

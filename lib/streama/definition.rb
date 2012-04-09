@@ -12,7 +12,7 @@ module Streama
       @act_target = definition[:act_target] || {}
       @act_object_group = definition[:act_object_group] || {}
       @act_target_group = definition[:act_target_group] || {}
-      @options    = definition[:options]    || {}
+      @options    = definition[:options]    || []
     end
     
     #
