@@ -62,7 +62,7 @@ module Streama
       #
       # @return [Streama::Activity] An Activity instance with data
       def publish(verb, data)
-        new.publish({:verb => verb, :receivers => receivers}.merge(data))
+        new.publish({:verb => verb}.merge(data))
       end
       
       def stream_for(actor, options={})
