@@ -196,7 +196,6 @@ module Streama
         act_object = data[cur_option]
 
         if act_object
-          self.options[cur_option] = act_object
           options << StreamaOption.new(name: cur_option, value: act_object)
           arguments.delete(cur_option)
 
