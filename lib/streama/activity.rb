@@ -15,8 +15,7 @@ module Streama
       field :act_object_group, :type => Array
       field :act_target_group, :type => Array
 
-      field :options,          :type => Hash, :default => {}
-
+      embeds_many :options, :class_name => "StreamaOption", as: :streama_optionable
 
       field :receivers,    :type => Array
 
@@ -198,13 +197,18 @@ module Streama
 
         if act_object
           self.options[cur_option] = act_object
+          options << StreamaOption.new(name: cur_option, value: act_object)
+          arguments.delete(cur_option)
+
         else
           #all options defined must be used
           raise Streama::InvalidData.new(act_object[0])
         end
       end
 
-
+      if arguments.size > 0
+        raise "unexpected arguments: " + arguments.to_json
+      end
 
     end
 
