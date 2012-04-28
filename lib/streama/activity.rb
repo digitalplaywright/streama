@@ -197,7 +197,7 @@ module Streama
 
         if act_object
           options << StreamaOption.new(name: cur_option, value: act_object)
-          arguments.delete(cur_option)
+          data.delete(cur_option)
 
         else
           #all options defined must be used
@@ -205,8 +205,8 @@ module Streama
         end
       end
 
-      if arguments.size > 0
-        raise "unexpected arguments: " + arguments.to_json
+      if data.size > 0
+        raise "unexpected arguments: " + data.to_json
       end
 
     end
