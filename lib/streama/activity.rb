@@ -8,26 +8,34 @@ module Streama
       #include Mongoid::Timestamps
 
       field :verb,             :type => Symbol
-      field :actor,            :type => Hash
-      field :act_object,       :type => Hash
-      field :act_target,       :type => Hash
 
-      field :act_object_group, :type => Array
-      field :act_target_group, :type => Array
+
+      field :actor_id,        :type => String
+      field :actor_type,      :type => String
+      field :act_object_id,   :type => String
+      field :act_object_type, :type => String
+      field :act_target_id,   :type => String
+      field :act_target_type, :type => String
+
+      field :act_object_group_ids,  :type => Array
+      field :act_object_group_type, :type => String
+
+      field :act_target_group_ids,  :type => Array
+      field :act_target_group_type, :type => String
 
       embeds_many :options, :class_name => "StreamaOption", as: :streama_optionable
 
-      field :receivers,    :type => Array
+      field :receiver_ids,    :type => Array
 
       index :name
-      index [['actor._id', Mongo::ASCENDING], ['actor._type', Mongo::ASCENDING]]
-      index [['act_object._id', Mongo::ASCENDING], ['act_object._type', Mongo::ASCENDING]]
-      index [['act_target._id', Mongo::ASCENDING], ['act_target._type', Mongo::ASCENDING]]
-      index [['act_object_group.id', Mongo::ASCENDING], ['act_object_group.type', Mongo::ASCENDING]]
-      index [['act_target_group.id', Mongo::ASCENDING], ['act_target_group.type', Mongo::ASCENDING]]
+      index [['actor_id', Mongo::ASCENDING], ['actor_type', Mongo::ASCENDING]]
+      index [['act_object_id', Mongo::ASCENDING], ['act_object_type', Mongo::ASCENDING]]
+      index [['act_target_id', Mongo::ASCENDING], ['act_target_type', Mongo::ASCENDING]]
+      index [['act_object_group_ids', Mongo::ASCENDING], ['act_object_group_type', Mongo::ASCENDING]]
+      index [['act_target_group_ids', Mongo::ASCENDING], ['act_target_group_type', Mongo::ASCENDING]]
 
 
-      index [['receivers.id', Mongo::ASCENDING], ['receivers.type', Mongo::ASCENDING]]
+      index [['receiver_ids', Mongo::ASCENDING], ['receiver_type', Mongo::ASCENDING]]
 
       validates_presence_of :actor, :verb
 
@@ -63,12 +71,6 @@ module Streama
         new.publish({:verb => verb}.merge(data))
       end
 
-      def stream_for(actor, options={})
-        query = {:receivers => {'$elemMatch' => {:id => actor.id, :type => actor.class.to_s}}}
-        query.merge!({:verb => options[:type]}) if options[:type]
-        self.where(query).without(:receivers).desc(:created_at)
-      end
-
     end
 
 
@@ -90,7 +92,14 @@ module Streama
     #
     # @return [Mongoid::Document] document A mongoid document instance
     def load_instance(type)
-      (data = self.send(type)).is_a?(Hash) ? data['type'].to_s.camelcase.constantize.find(data['id']) : data
+      data_type = self.send(type.to_s+'_type')
+      data_id   = self.send(type.to_s+'_id')
+
+      if data_id.present?
+        data_type.constantize.find(data_id)
+      else
+        nil
+      end
     end
 
     def refresh_data
@@ -105,46 +114,36 @@ module Streama
 
       cur_receivers  = data.delete(:receivers)
 
-      if cur_receivers == nil && data[:actor].respond_to?(:followers)
-        data[:actor].followers
-      end
-
       if cur_receivers
-        self.receivers = cur_receivers.map { |r| { :id => r.id, :type => r.class.to_s } }
+        self.receiver_ids = []
+        cur_receivers.each do |receiver|
+          self.receiver_ids << receiver.id
+        end
+
+        self.receiver_type = cur_receivers.first.class.to_s
       end
 
       [:actor, :act_object, :act_target].each do |type|
 
-        cur_object = data[type]
+        act_object = arguments[type]
 
-        if cur_object == nil
-          if definition.send(type).empty?
-            next
-
-          else
-            raise definition.to_json
+        if act_object == nil
+          if definition.send(type.to_sym) != nil
+            raise verb.to_json
             raise Streama::InvalidData.new(type)
+          else
+            next
           end
         end
 
-        class_sym = cur_object.class.name.to_sym
+        class_sym = act_object.class.name.to_sym
 
-        raise class_sym.to_s+type.to_s+class_sym.to_s+definition.send(type).to_s unless definition.send(type).has_key?(class_sym)
-        #raise Streama::InvalidData.new(class_sym) unless definition.send(type) == class_sym
+        raise Streama::InvalidData.new(class_sym) unless definition.send(type) == class_sym
 
+        write_attribute(type.to_s+"_id",   act_object.id.to_s)
+        write_attribute(type.to_s+"_type", act_object.class.name)
 
-        hash = {'id' => cur_object.id, 'type' => cur_object.class.name}
-
-        if fields = definition.send(type)[class_sym].try(:[],:cache)
-          fields.each do |field|
-            raise Streama::InvalidField.new(field) unless cur_object.respond_to?(field)
-            hash[field.to_s] = cur_object.send(field)
-          end
-        end
-
-        write_attribute(type, hash)
-
-        data.delete(type)
+        arguments.delete(type)
 
       end
 
@@ -170,22 +169,14 @@ module Streama
 
           raise Streama::InvalidData.new(class_sym) unless definition.send(group).has_key?(class_sym)
 
-
-          hash = {'id' => cur_obj.id, 'type' => cur_obj.class.name}
-
-          if fields = definition.send(group)[class_sym][:cache]
-            fields.each do |field|
-              raise Streama::InvalidField.new(field) unless cur_obj.respond_to?(field)
-              hash[field.to_s] = cur_obj.send(field)
-            end
-          end
-          cur_array << hash
+          cur_array << cur_obj.id
 
 
         end
 
 
-        write_attribute(group, cur_array)
+        write_attribute(group.to_s+"_ids",  cur_array)
+        write_attribute(group.to_s+"_type", grp_object.first.class.name)
 
         data.delete(group)
 

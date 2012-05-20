@@ -28,10 +28,6 @@ module Streama
       activity = activity_class.publish(name, {:actor => self}.merge(options))
     end
 
-    def activity_stream(options = {})
-      activity_class.stream_for(self, options)
-    end
-
     def activity_class
       @activity_klass ||= activity_klass ? activity_klass.classify.constantize : ::Activity
     end
