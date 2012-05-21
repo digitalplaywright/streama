@@ -115,7 +115,7 @@ module Streama
 
       cur_receivers  = data.delete(:receivers)
 
-      if cur_receivers
+      if cur_receivers && cur_receivers.size > 0
         self.receiver_ids = []
         cur_receivers.each do |receiver|
           self.receiver_ids << receiver.id
