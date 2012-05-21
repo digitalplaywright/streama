@@ -126,9 +126,9 @@ module Streama
 
       [:actor, :act_object, :act_target].each do |type|
 
-        act_object = data[type]
+        cur_object = data[type]
 
-        if act_object == nil
+        if cur_object == nil
           if definition.send(type.to_sym) != nil
             raise verb.to_json
             raise Streama::InvalidData.new(type)
@@ -137,12 +137,12 @@ module Streama
           end
         end
 
-        class_sym = act_object.class.name.to_sym
+        class_sym = cur_object.class.name.to_sym
 
         raise Streama::InvalidData.new(class_sym) unless definition.send(type) == class_sym
 
-        write_attribute(type.to_s+"_id",   act_object.id.to_s)
-        write_attribute(type.to_s+"_type", act_object.class.name)
+        write_attribute(type.to_s+"_id",   cur_object.id.to_s)
+        write_attribute(type.to_s+"_type", cur_object.class.name)
 
         data.delete(type)
 
@@ -185,15 +185,15 @@ module Streama
 
       def_options = definition.send(:options)
       def_options.each do |cur_option|
-        act_object = data[cur_option]
+        cur_object = data[cur_option]
 
-        if act_object
-          options << StreamaOption.new(name: cur_option, value: act_object)
+        if cur_object
+          options << StreamaOption.new(name: cur_option, value: cur_object)
           data.delete(cur_option)
 
         else
           #all options defined must be used
-          raise Streama::InvalidData.new(act_object[0])
+          raise Streama::InvalidData.new(cur_object[0])
         end
       end
 
