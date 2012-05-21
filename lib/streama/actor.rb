@@ -8,11 +8,11 @@ module Streama
     end
 
     module ClassMethods
-          
+
       def activity_class(klass)
         self.activity_klass = klass.to_s
       end
-      
+
     end
 
 

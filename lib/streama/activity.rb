@@ -38,7 +38,7 @@ module Streama
 
       index [['receiver_ids', Mongo::ASCENDING], ['receiver_type', Mongo::ASCENDING]]
 
-      validates_presence_of :actor, :verb
+      validates_presence_of :actor_id, :actor_type, :verb
 
     end
 
@@ -67,7 +67,7 @@ module Streama
       # @param [ String ] verb The verb of the activity
       # @param [ Hash ] data The data to initialize the activity with.
       #
-      # @return [Streama::Activity] An Activity instance with data
+      # @return [Streama::Activity2] An Activity instance with data
       def publish(verb, data)
         new.publish({:verb => verb}.merge(data))
       end
@@ -128,12 +128,13 @@ module Streama
 
         cur_object = data[type]
 
-        if cur_object == nil
-          if definition.send(type.to_sym) != nil
+        unless cur_object
+          if definition.send(type.to_sym)
             raise verb.to_json
-            raise Streama::InvalidData.new(type)
+            #raise Streama::InvalidData.new(type)
           else
             next
+
           end
         end
 
@@ -150,28 +151,25 @@ module Streama
 
       [:act_object_group, :act_target_group].each do |group|
 
-        cur_array = []
 
         grp_object = data[group]
 
         if grp_object == nil
-          if definition.send(group.to_sym).empty?
+          if definition.send(group.to_sym)
+            raise verb.to_json
+            #raise Streama::InvalidData.new(group)
+          else
             next
 
-          else
-            raise verb.to_json
-            raise Streama::InvalidData.new(group)
           end
         end
 
+        cur_array = []
+
         grp_object.each do |cur_obj|
-
-          class_sym = cur_object.class.name.to_sym
-
-          raise Streama::InvalidData.new(class_sym) unless definition.send(group).has_key?(class_sym)
+          raise Streama::InvalidData.new(class_sym) unless definition.send(type) == cur_object.class.name.to_sym
 
           cur_array << cur_obj.id
-
 
         end
 
