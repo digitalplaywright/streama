@@ -126,7 +126,7 @@ module Streama
 
       [:actor, :act_object, :act_target].each do |type|
 
-        act_object = arguments[type]
+        act_object = data[type]
 
         if act_object == nil
           if definition.send(type.to_sym) != nil
@@ -144,7 +144,7 @@ module Streama
         write_attribute(type.to_s+"_id",   act_object.id.to_s)
         write_attribute(type.to_s+"_type", act_object.class.name)
 
-        arguments.delete(type)
+        data.delete(type)
 
       end
 
