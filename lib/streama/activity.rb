@@ -26,6 +26,7 @@ module Streama
       embeds_many :options, :class_name => "StreamaOption", as: :streama_optionable
 
       field :receiver_ids,    :type => Array
+      field :receiver_type,   :type => String
 
       index :name
       index [['actor_id', Mongo::ASCENDING], ['actor_type', Mongo::ASCENDING]]
