@@ -167,7 +167,7 @@ module Streama
         cur_array = []
 
         grp_object.each do |cur_obj|
-          raise Streama::InvalidData.new(class_sym) unless definition.send(type) == cur_object.class.name.to_sym
+          raise Streama::InvalidData.new(class_sym) unless definition.send(group) == cur_object.class.name.to_sym
 
           cur_array << cur_obj.id
 
