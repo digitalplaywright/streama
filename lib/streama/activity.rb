@@ -28,7 +28,7 @@ module Streama
       field :receiver_ids,    :type => Array
       field :receiver_type,   :type => String
 
-      index :name
+      index({ :name => 1 })
       index({ :actor_id => 1, :actor_type => 1 })
       index({ :act_object_id => 1, :act_object_type => 1 })
       index({ :act_target_id => 1, :act_target_type => 1 })
