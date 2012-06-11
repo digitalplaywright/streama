@@ -23,20 +23,18 @@ module Streama
       field :act_target_group_ids,  :type => Array
       field :act_target_group_type, :type => String
 
-      embeds_many :options, :class_name => "StreamaOption", as: :streama_optionable
+      embeds_many :options, :class_name => "StreamaOption", :as => :streama_optionable
 
       field :receiver_ids,    :type => Array
       field :receiver_type,   :type => String
 
       index :name
-      index [['actor_id', Mongo::ASCENDING], ['actor_type', Mongo::ASCENDING]]
-      index [['act_object_id', Mongo::ASCENDING], ['act_object_type', Mongo::ASCENDING]]
-      index [['act_target_id', Mongo::ASCENDING], ['act_target_type', Mongo::ASCENDING]]
-      index [['act_object_group_ids', Mongo::ASCENDING], ['act_object_group_type', Mongo::ASCENDING]]
-      index [['act_target_group_ids', Mongo::ASCENDING], ['act_target_group_type', Mongo::ASCENDING]]
-
-
-      index [['receiver_ids', Mongo::ASCENDING], ['receiver_type', Mongo::ASCENDING]]
+      index({ :actor_id => 1, :actor_type => 1 })
+      index({ :act_object_id => 1, :act_object_type => 1 })
+      index({ :act_target_id => 1, :act_target_type => 1 })
+      index({ :act_object_group_ids => 1, :act_object_group_type => 1 })
+      index({ :act_target_group_ids => 1, :act_target_group_type => 1 })
+      index({ :receiver_ids => 1, :receiver_type => 1 })
 
       validates_presence_of :actor_id, :actor_type, :verb
 
@@ -186,7 +184,7 @@ module Streama
         cur_object = data[cur_option]
 
         if cur_object
-          options << StreamaOption.new(name: cur_option, value: cur_object)
+          options << StreamaOption.new(:name => cur_option, :value => cur_object)
           data.delete(cur_option)
 
         else
