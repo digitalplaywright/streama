@@ -32,9 +32,9 @@ module Streama
       index({ :actor_id => 1, :actor_type => 1 })
       index({ :act_object_id => 1, :act_object_type => 1 })
       index({ :act_target_id => 1, :act_target_type => 1 })
-      index({ :act_object_group_ids => 1, :act_object_group_type => 1 })
-      index({ :act_target_group_ids => 1, :act_target_group_type => 1 })
-      index({ :receiver_ids => 1, :receiver_type => 1 })
+      index({ :act_object_group_ids => "2d" , :act_object_group_type => 1 })
+      index({ :act_target_group_ids => "2d" , :act_target_group_type => 1 })
+      index({ :receiver_ids => "2d", :receiver_type => 1 })
 
       validates_presence_of :actor_id, :actor_type, :verb
 
