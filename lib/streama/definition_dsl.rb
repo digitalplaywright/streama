@@ -10,8 +10,7 @@ module Streama
           :actor            => nil,
           :act_object       => nil,
           :act_target       => nil,
-          :act_object_group => nil,
-          :act_target_group => nil,
+          :grouped_actor    => nil,
           :reverses         => nil,
           :options          => nil
       }
@@ -39,7 +38,7 @@ module Streama
       end
     end
 
-    data_methods :actor, :act_object, :act_target, :act_object_group, :act_target_group
+    data_methods :actor, :act_object, :act_target, :grouped_actor
 
   end
   

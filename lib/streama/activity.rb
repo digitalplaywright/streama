@@ -9,32 +9,18 @@ module Streama
 
       field :verb,             :type => Symbol
 
+      belongs_to :actor,      :polymorphic => true, :inverse_of => nil, :index => true
+      belongs_to :act_object, :polymorphic => true, :inverse_of => nil, :index => true
+      belongs_to :act_target, :polymorphic => true, :inverse_of => nil, :index => true
 
-      field :actor_id,        :type => String
-      field :actor_type,      :type => String
-      field :act_object_id,   :type => String
-      field :act_object_type, :type => String
-      field :act_target_id,   :type => String
-      field :act_target_type, :type => String
-
-      field :act_object_group_ids,  :type => Array
-      field :act_object_group_type, :type => String
-
-      field :act_target_group_ids,  :type => Array
-      field :act_target_group_type, :type => String
+      has_and_belongs_to_many :grouped_actors, :class_name => "Space", :inverse_of => nil, :index => true
+      has_and_belongs_to_many :receivers,         :class_name => "Space", :inverse_of => nil, :index => true
 
       embeds_many :options, :class_name => "StreamaOption", :as => :streama_optionable
 
-      field :receiver_ids,    :type => Array
-      field :receiver_type,   :type => String
 
+      index({ :verb => 1 })
       index({ :name => 1 })
-      index({ :actor_id => 1, :actor_type => 1 })
-      index({ :act_object_id => 1, :act_object_type => 1 })
-      index({ :act_target_id => 1, :act_target_type => 1 })
-      index({ :act_object_group_ids => "2d" , :act_object_group_type => 1 })
-      index({ :act_target_group_ids => "2d" , :act_target_group_type => 1 })
-      index({ :receiver_ids => "2d", :receiver_type => 1 })
 
       validates_presence_of :actor_id, :actor_type, :verb
 
@@ -85,21 +71,6 @@ module Streama
       self
     end
 
-    # Returns an instance of an actor, act_object or act_target
-    #
-    # @param [ Symbol ] type The data type (actor, act_object, act_target) to return an instance for.
-    #
-    # @return [Mongoid::Document] document A mongoid document instance
-    def load_instance(type)
-      data_type = self.send(type.to_s+'_type')
-      data_id   = self.send(type.to_s+'_id')
-
-      if data_id.present?
-        data_type.constantize.find(data_id)
-      else
-        nil
-      end
-    end
 
     def refresh_data
       save(:validate => false)
@@ -114,12 +85,9 @@ module Streama
       cur_receivers  = data.delete(:receivers)
 
       if cur_receivers && cur_receivers.size > 0
-        self.receiver_ids = []
         cur_receivers.each do |receiver|
-          self.receiver_ids << receiver.id
+          self.receivers << receiver
         end
-
-        self.receiver_type = cur_receivers.first.class.to_s
       end
 
       [:actor, :act_object, :act_target].each do |type|
@@ -140,14 +108,22 @@ module Streama
 
         raise Streama::InvalidData.new(class_sym) unless definition.send(type) == class_sym
 
-        write_attribute(type.to_s+"_id",   cur_object.id.to_s)
-        write_attribute(type.to_s+"_type", cur_object.class.name)
+        case type
+          when :actor
+            self.actor = cur_object
+          when :act_object
+            self.act_object = cur_object
+          when :act_target
+            self.act_target = cur_object
+          else
+            raise "unknown type"
+        end
 
         data.delete(type)
 
       end
 
-      [:act_object_group, :act_target_group].each do |group|
+      [:grouped_actor].each do |group|
 
 
         grp_object = data[group]
@@ -162,18 +138,12 @@ module Streama
           end
         end
 
-        cur_array = []
-
         grp_object.each do |cur_obj|
           raise Streama::InvalidData.new(class_sym) unless definition.send(group) == cur_obj.class.name.to_sym
 
-          cur_array << cur_obj.id
+          self.grouped_actors << cur_obj
 
         end
-
-
-        write_attribute(group.to_s+"_ids",  cur_array)
-        write_attribute(group.to_s+"_type", grp_object.first.class.name)
 
         data.delete(group)
 
