@@ -9,7 +9,7 @@ module Streama
 
       field :verb,             :type => Symbol
 
-      belongs_to :actor,      :polymorphic => true, :inverse_of => nil, :index => true
+      belongs_to :actor,      :polymorphic => true, :index => true
       belongs_to :act_object, :polymorphic => true, :inverse_of => nil, :index => true
       belongs_to :act_target, :polymorphic => true, :inverse_of => nil, :index => true
 
