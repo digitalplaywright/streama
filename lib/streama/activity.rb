@@ -9,9 +9,9 @@ module Streama
 
       field :verb,             :type => Symbol
 
-      belongs_to :actor,      :polymorphic => true, :index => true
-      belongs_to :act_object, :polymorphic => true, :inverse_of => nil
-      belongs_to :act_target, :polymorphic => true, :inverse_of => nil
+      belongs_to :actor,      :polymorphic => true, :inverse_of => :actor_activities,      :index => true
+      belongs_to :act_object, :polymorphic => true, :inverse_of => :act_object_activities, :index => true
+      belongs_to :act_target, :polymorphic => true, :inverse_of => :act_target_activities, :index => true
 
       has_and_belongs_to_many :grouped_actors, :class_name => "Space", :inverse_of => nil
       has_and_belongs_to_many :receivers,      :class_name => "Space", :inverse_of => nil
