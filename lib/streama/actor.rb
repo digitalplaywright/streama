@@ -5,6 +5,12 @@ module Streama
 
     included do
       cattr_accessor :activity_klass
+
+      has_many :actor_activities,       :class_name => "Activity", :as => :actor
+      has_many :act_object_activities,  :class_name => "Activity", :as => :act_object
+      has_many :act_target_activities,  :class_name => "Activity", :as => :act_target
+
+
     end
 
     module ClassMethods
