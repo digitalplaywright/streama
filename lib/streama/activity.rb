@@ -13,8 +13,8 @@ module Streama
       belongs_to :act_object, :polymorphic => true, :inverse_of => :act_object_activities, :index => true
       belongs_to :act_target, :polymorphic => true, :inverse_of => :act_target_activities, :index => true
 
-      has_and_belongs_to_many :grouped_actors, :class_name => "Space", :inverse_of => nil
-      has_and_belongs_to_many :receivers,      :class_name => "Space", :inverse_of => nil
+      has_and_belongs_to_many :grouped_actors, :class_name => "Space", :inverse_of => nil, :validate => false
+      has_and_belongs_to_many :receivers,      :class_name => "Space", :inverse_of => nil, :validate => false
 
       embeds_many :options, :class_name => "StreamaOption", :as => :streama_optionable
 
@@ -84,9 +84,17 @@ module Streama
 
       cur_receivers  = data.delete(:receivers)
 
-      if cur_receivers && cur_receivers.size > 0
-        cur_receivers.each do |receiver|
-          self.receivers << receiver
+      if cur_receivers
+        if cur_receivers.respond_to?(:each)
+          cur_receivers.each do |sp|
+            raise "receivers need to be of Space type. Got:" + sp.class.name unless sp.kind_of?(Space)
+            self.receivers << sp
+          end
+        else
+          #if only one receivers is supplied
+          raise "receivers need to be of Space type. Got:" + cur_receivers.class.name unless cur_receivers.kind_of?(Space)
+
+          self.receivers << cur_receivers
         end
       end
 
