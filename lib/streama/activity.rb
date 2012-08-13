@@ -20,7 +20,6 @@ module Streama
 
 
       index({ :verb => 1 })
-      index({ :name => 1 })
 
       validates_presence_of :actor_id, :actor_type, :verb
 
