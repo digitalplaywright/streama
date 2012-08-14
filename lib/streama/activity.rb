@@ -165,9 +165,9 @@ module Streama
         if cur_object
 
           if cur_option == :description
-            options << StreamaOption.new(:name => cur_option, :value => cur_object)
-          else
             self.description = cur_object
+          else
+            options << StreamaOption.new(:name => cur_option, :value => cur_object)
           end
           data.delete(cur_option)
 
