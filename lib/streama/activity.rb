@@ -9,6 +9,8 @@ module Streama
 
       field :verb,             :type => Symbol
 
+      field :description, :type => String
+
       belongs_to :actor,      :polymorphic => true, :inverse_of => :activities,            :index => true
       belongs_to :act_object, :polymorphic => true, :inverse_of => :act_object_activities, :index => true
       belongs_to :act_target, :polymorphic => true, :inverse_of => :act_target_activities, :index => true
@@ -161,7 +163,12 @@ module Streama
         cur_object = data[cur_option]
 
         if cur_object
-          options << StreamaOption.new(:name => cur_option, :value => cur_object)
+
+          if cur_option == :description
+            options << StreamaOption.new(:name => cur_option, :value => cur_object)
+          else
+            self.description = cur_object
+          end
           data.delete(cur_option)
 
         else
