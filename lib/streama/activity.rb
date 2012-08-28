@@ -12,8 +12,8 @@ module Streama
       field :description, :type => String
 
       belongs_to :actor,      :polymorphic => true, :inverse_of => :activities,            :index => true
-      belongs_to :act_object, :polymorphic => true, :inverse_of => :act_object_activities, :index => true
-      belongs_to :act_target, :polymorphic => true, :inverse_of => :act_target_activities, :index => true
+      belongs_to :act_object, :polymorphic => true, :inverse_of => :act_object_activities
+      belongs_to :act_target, :polymorphic => true, :inverse_of => :act_target_activities
 
       has_and_belongs_to_many :grouped_actors, :class_name => "Space", :inverse_of => nil, :validate => false
       has_and_belongs_to_many :receivers,      :class_name => "Space", :inverse_of => nil, :validate => false
